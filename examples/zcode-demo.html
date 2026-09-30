@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZCode × OpenDesign 联动测试</title>
+<style>
+  :root {
+    --bg: #0D1117;
+    --panel: #161B22;
+    --line: #21262D;
+    --ink: #E6EDF3;
+    --muted: #8B949E;
+    --accent: #2EA664;
+    --accent-soft: rgba(46, 166, 100, 0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Inter", "Noto Sans SC", system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 48px;
+    max-width: 640px;
+    width: 100%;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid rgba(46, 166, 100, 0.35);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  .badge .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  h1 {
+    margin: 24px 0 12px;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  p { color: var(--muted); font-size: 15px; line-height: 1.8; }
+  .chain {
+    margin: 32px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: 13px;
+  }
+  .node {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 10px 16px;
+    border-radius: 10px;
+    color: var(--ink);
+  }
+  .node b { color: var(--accent); }
+  .arrow { color: var(--muted); }
+  .facts { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 24px; display: grid; gap: 12px; }
+  .fact { display: flex; justify-content: space-between; font-size: 14px; }
+  .fact span:first-child { color: var(--muted); }
+  .fact span:last-child { font-family: ui-monospace, Consolas, monospace; color: var(--ink); }
+  .footer { margin-top: 28px; font-size: 12px; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge"><span class="dot"></span>MCP 联动验证 · 页面由 ZCode 生成</div>
+    <h1>这条链路走通了</h1>
+    <p>你在 ZCode 对话里说了一句「生成一个页面」，这个请求经由 OpenDesign 的 MCP 服务器落入本地 daemon，创建了这个项目和这份 HTML——全程没有打开 OpenDesign 界面。</p>
+    <div class="chain">
+      <div class="node">ZCode <b>GLM-5.3</b></div>
+      <div class="arrow">→</div>
+      <div class="node">MCP stdio</div>
+      <div class="arrow">→</div>
+      <div class="node">OpenDesign daemon</div>
+      <div class="arrow">→</div>
+      <div class="node">本页面</div>
+    </div>
+    <div class="facts">
+      <div class="fact"><span>调用工具</span><span>create_project · create_artifact</span></div>
+      <div class="fact"><span>传输</span><span>JSON-RPC over stdio · :7456</span></div>
+      <div class="fact"><span>生成时间</span><span>2026-09-29 22:0x</span></div>
+    </div>
+    <div class="footer">下一步：在 OpenDesign 里打开这个项目预览 · 或让 ZCode 继续改它</div>
+  </div>
+</body>
+</html>
