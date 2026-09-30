@@ -116,6 +116,14 @@ function runZcodeTurn(prompt, imagePaths) {
     const restorePlugins = disablePluginsTemporarily();
     const child = spawn(process.execPath, args, { stdio: ["ignore", "pipe", "pipe"] });
     setTimeout(restorePlugins, 6000).unref?.();
+    // 回合级心跳：v1 桥接无流式输出，大任务整轮静默会触发 OpenDesign 的 600s
+    // 停滞看门狗（实测四个生成任务全部被误杀）。每 45s 重发一帧 daemon 已证明
+    // 能消化的 system/status（events.jsonl 中映射为 status 事件），回合结束清除。
+    const heartbeat = setInterval(
+      () => emit({ type: "system", subtype: "status", status: "working" }),
+      45000,
+    );
+    heartbeat.unref?.();
     const dbg = process.env.ZCODE_SHIM_DEBUG === "1";
     if (dbg) console.error(`[shim] spawn: ${args.join(" ").slice(0, 300)}`);
     let out = "";
@@ -136,8 +144,12 @@ function runZcodeTurn(prompt, imagePaths) {
       }, 15000);
       child.on("close", () => clearInterval(hb));
     }
-    child.on("error", (e) => resolve({ ok: false, errors: [String(e && e.message ? e.message : e)] }));
+    child.on("error", (e) => {
+      clearInterval(heartbeat);
+      resolve({ ok: false, errors: [String(e && e.message ? e.message : e)] });
+    });
     child.on("close", (code) => {
+      clearInterval(heartbeat);
       restorePlugins();
       if (promptFile) rmSync(promptFile, { force: true });
       let payload = null;
