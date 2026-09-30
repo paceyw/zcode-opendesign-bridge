@@ -96,7 +96,7 @@ copyFileSync(join(here, "zcode-cc.mjs"), SHIM_DST);
 
 const profile = {
   id: PROFILE_ID,
-  name: "ZCode (GLM)",
+  name: "ZCode CLI",
   baseAgent: "claude",
   bin: "node", // 必须是 PATH 上可解析的裸命令名；daemon 的探测对绝对路径 bin 不成立
   args: [SHIM_DST],

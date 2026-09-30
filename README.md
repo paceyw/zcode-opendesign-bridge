@@ -47,7 +47,7 @@ The installer (idempotent):
 2. auto-detects your ZCode install: `zcode.cjs` path and the **newest** built-in provider config under `~/.zcode/v2/runtime/provider/`
 3. writes the `zcode` agent profile into `~/.open-design/agents.local.json` (OpenDesign's documented user-level extension point; other profiles are preserved)
 
-Then restart OpenDesign (or its daemon) and pick **"ZCode (GLM)"** in the agent switcher.
+Then restart OpenDesign (or its daemon) and pick **"ZCode CLI"** in the agent switcher.
 
 `node install.mjs --uninstall` removes the profile and shim.
 
