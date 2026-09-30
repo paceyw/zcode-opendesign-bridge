@@ -89,3 +89,13 @@ You should see `system/init`, `system/status`, then `assistant` + `result` frame
 ## License
 
 MIT
+
+## Performance: headless turns were ~100s → now ~37s
+
+The CLI serially connects every plugin's MCP server at startup (~60 servers ≈
+47-60s) and **blocks the turn until they all settle**. The bridge now toggles
+the `plugins.enabled` settings key off for the child's startup window and
+restores the original file afterwards (race-guarded; self-heals on next start).
+Design runs don't lose anything — plugin MCPs aren't available to headless
+children anyway. If you'd rather keep plugins loaded for CLI runs, delete the
+`disablePluginsTemporarily` call in `zcode-cc.mjs`.

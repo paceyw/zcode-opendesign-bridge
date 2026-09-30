@@ -17,9 +17,48 @@
  */
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync } from "node:fs";
+import { tmpdir, homedir } from "node:os";
 import { join } from "node:path";
+
+// —— 插件快速通道 ——
+// CLI 无头运行每次串行连接 ~60 个插件 MCP server（约 47-60 秒），回合被完全阻塞。
+// 设置 settings 键 plugins.enabled=false 可跳过全部插件加载，单轮耗时 98s → 37s。
+// 桌面版与 CLI 共享该配置：仅在子进程启动窗口内临时禁用，随后恢复原文件；
+// 若期间文件被他人改动则不覆盖（防竞态）。垫片启动时先自愈残留的禁用态。
+const CLI_CONFIG = join(homedir(), ".zcode", "cli", "config.json");
+function readCliConfigText() { try { return readFileSync(CLI_CONFIG, "utf8"); } catch { return null; } }
+function ensurePluginsRestored() {
+  try {
+    const j = JSON.parse(readCliConfigText() || "{}");
+    if (j.plugins && j.plugins.__odBridgeSwap) {
+      delete j.plugins.__odBridgeSwap;
+      delete j.plugins.enabled; // 恢复默认（原配置未显式写该键）
+      writeFileSync(CLI_CONFIG, JSON.stringify(j, null, 2));
+    }
+  } catch {}
+}
+function disablePluginsTemporarily() {
+  ensurePluginsRestored();
+  const orig = readCliConfigText();
+  if (!orig) return () => {};
+  let swapped;
+  try { swapped = JSON.parse(orig); } catch { return () => {}; }
+  swapped.plugins = { ...swapped.plugins, enabled: false, __odBridgeSwap: true };
+  const swappedText = JSON.stringify(swapped, null, 2);
+  try { writeFileSync(CLI_CONFIG, swappedText); } catch { return () => {}; }
+  let restored = false;
+  const restore = () => {
+    if (restored) return;
+    restored = true;
+    try {
+      const cur = readCliConfigText();
+      if (cur === swappedText) writeFileSync(CLI_CONFIG, orig); // 仍是我们的版本 → 字节级还原
+      else ensurePluginsRestored();                              // 被他人改过 → 只摘标记
+    } catch {}
+  };
+  return restore;
+}
 
 const ZCODE_CJS = process.env.OD_ZCODE_CJS;
 if (!ZCODE_CJS) {
@@ -73,7 +112,10 @@ function runZcodeTurn(prompt, imagePaths) {
     // 可用的配置——CLI 自身的 fallback 探测路径在本安装上不成立（resources/glm/
     // provider 不存在）。不要清洗环境；仅确保本垫片使用的 OD_ZCODE_CJS 不在
     // ZCODE_* 命名空间内，避免与 CLI 的内部变量冲突。
+    // 子进程启动窗口内禁用插件加载（省 ~60s 串行 MCP 连接），6 秒后恢复原配置。
+    const restorePlugins = disablePluginsTemporarily();
     const child = spawn(process.execPath, args, { stdio: ["ignore", "pipe", "pipe"] });
+    setTimeout(restorePlugins, 6000).unref?.();
     const dbg = process.env.ZCODE_SHIM_DEBUG === "1";
     if (dbg) console.error(`[shim] spawn: ${args.join(" ").slice(0, 300)}`);
     let out = "";
@@ -96,6 +138,7 @@ function runZcodeTurn(prompt, imagePaths) {
     }
     child.on("error", (e) => resolve({ ok: false, errors: [String(e && e.message ? e.message : e)] }));
     child.on("close", (code) => {
+      restorePlugins();
       if (promptFile) rmSync(promptFile, { force: true });
       let payload = null;
       const s = out.indexOf("{");
@@ -199,6 +242,7 @@ async function handleUserMessageInner(frame) {
 }
 
 // daemon 可用性探测会以 <bin> --version 调用本进程
+ensurePluginsRestored(); // 上次异常退出可能留下禁用态，先自愈
 if (process.argv.includes("--version") || process.argv.includes("-v")) {
   process.stdout.write("zcode-cc shim 1.0.0 (claude-wire -> zcode -p)\n");
   process.exit(0);
