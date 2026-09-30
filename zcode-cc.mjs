@@ -241,10 +241,19 @@ async function handleUserMessageInner(frame) {
   }
 }
 
-// daemon 可用性探测会以 <bin> --version 调用本进程
+// daemon 可用性探测会以 <bin> <versionArgs> 调用本进程（versionArgs = [本脚本, --version]）。
+// 探测必须真实校验链路：OD_ZCODE_CJS 缺失/文件不存在 → 非零退出，让 daemon 判定不可用，
+// 而不是只证明 PATH 上有个 node。
 ensurePluginsRestored(); // 上次异常退出可能留下禁用态，先自愈
 if (process.argv.includes("--version") || process.argv.includes("-v")) {
-  process.stdout.write("zcode-cc shim 1.0.0 (claude-wire -> zcode -p)\n");
+  const cli = process.env.OD_ZCODE_CJS;
+  if (!cli || !existsSync(cli)) {
+    process.stderr.write(
+      "zcode-cc shim: OD_ZCODE_CJS is unset or its file is missing — re-run install.mjs\n",
+    );
+    process.exit(1);
+  }
+  process.stdout.write("zcode-cc shim 1.1.0 (claude-wire -> zcode -p; CLI found)\n");
   process.exit(0);
 }
 

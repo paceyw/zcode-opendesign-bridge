@@ -100,6 +100,9 @@ const profile = {
   baseAgent: "claude",
   bin: "node", // 必须是 PATH 上可解析的裸命令名；daemon 的探测对绝对路径 bin 不成立
   args: [SHIM_DST],
+  // 可用性探测：args 只进 buildArgs（回合），不进版本探测；不设 versionArgs 时
+  // daemon 只会跑 `node --version`，桥坏了也显示"可用"。指向桥脚本让探测真实校验链路。
+  versionArgs: [SHIM_DST, "--version"],
   // 模型列表：只列真实可用的（zcode CLI 无 --model 参数，切换不生效，故只放默认款）
   models: ["GLM-5.3"],
   defaultModel: "GLM-5.3",
