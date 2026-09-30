@@ -61,6 +61,8 @@ Then restart OpenDesign (or its daemon) and pick **"ZCode CLI"** in the agent sw
 
 ## Troubleshooting
 
+**Runs fail in < 6 s with `Model creation failed (traceId: …)` right after a ZCode upgrade** — ZCode ≥ 22.20.0 (CLI 0.16.9) resets `~/.zcode/v2/provider_config.json` to an empty skeleton on upgrade, dropping the personal Coding Plan provider rule that headless `-p` turns depend on (OAuth login is unusable by CLI children). The same release's "add provider" dialog can fail with 「创建供应商失败：个人供应商配置格式无效」, blocking the UI path to re-create it. Recovery: restore the rule by hand with the CLI-verified shape below (arrays, no `api` override), then `node reset-provider-backoff.mjs`. Full write-up: the "Provider / Coding Plan setup" section of [`docs/zcode-agent.md`](https://github.com/nexu-io/open-design/blob/main/docs/zcode-agent.md) in the OpenDesign docs PR #8525.
+
 **Agent shows unavailable** — the profile's `bin` must be a bare command name resolvable on PATH (`node`). Absolute paths fail OpenDesign's PATH-scan probe.
 
 **"无法定位 provider config" from the child** — the ZCode CLI needs `ZCODE_BUILTIN_PROVIDER_CONFIG_FILE` to locate its providers on some installs; the installer sets it (as an env pair with `ZCODE_PERSONAL_PROVIDER_CONFIG_FILE` — they must be set together). Re-run the installer after every ZCode upgrade.
