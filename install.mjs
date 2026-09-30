@@ -137,4 +137,4 @@ console.log("  zcode.cjs        = " + zcodeCjs);
 console.log("  builtin provider = " + builtinProvider);
 console.log("\n下一步：重启 OpenDesign（退出再打开，或重启其 daemon），");
 console.log('然后在 Agent 切换器里选择 "ZCode (GLM)"。');
-console.log("注意：ZCode 升级后请重跑本安装脚本（provider 配置路径随版本变化）。");
+console.log("可选：node deploy-icon.mjs 铺官方图标。");console.log("注意：ZCode 升级后请重跑本安装脚本（provider 配置路径随版本变化）。");
