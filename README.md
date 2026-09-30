@@ -37,7 +37,7 @@ assistant + result frames (claude-stream-json) → OpenDesign UI
 Requirements: OpenDesign desktop app, ZCode desktop install (logged in to your Coding Plan), Node.js ≥ 18 on PATH. Windows is tested; the bridge itself is plain Node and should port to macOS/Linux.
 
 ```bash
-git clone <this repo>
+git clone https://github.com/paceyw/zcode-opendesign-bridge
 cd zcode-opendesign-bridge
 node install.mjs        # idempotent; --uninstall removes everything
 node deploy-icon.mjs    # optional: put the official ZCode icon into OpenDesign's UI
